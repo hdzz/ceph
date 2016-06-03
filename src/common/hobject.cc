@@ -104,7 +104,7 @@ string hobject_t::to_str() const
 
 void hobject_t::encode(bufferlist& bl) const
 {
-  ENCODE_START(4, 3, bl);
+  ENCODE_START(5, 3, bl);
   ::encode(key, bl);
   ::encode(oid, bl);
   ::encode(snap, bl);
@@ -117,7 +117,7 @@ void hobject_t::encode(bufferlist& bl) const
 
 void hobject_t::decode(bufferlist::iterator& bl)
 {
-  DECODE_START_LEGACY_COMPAT_LEN(4, 3, 3, bl);
+  DECODE_START_LEGACY_COMPAT_LEN(5, 3, 3, bl);
   if (struct_v >= 1)
     ::decode(key, bl);
   ::decode(oid, bl);
@@ -141,6 +141,12 @@ void hobject_t::decode(bufferlist::iterator& bl)
 	oid.name.empty()) {
       pool = INT64_MIN;
       assert(is_min());
+    }
+
+    // for compatibility with some earlier verisons which might encoded
+    // a non-canonical max object
+    if (struct_v < 5 && max) {
+      *this = hobject_t::get_max();
     }
   }
   DECODE_FINISH(bl);
